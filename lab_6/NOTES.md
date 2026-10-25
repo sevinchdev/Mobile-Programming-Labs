@@ -48,3 +48,29 @@ A switch checks the arms from top to bottom and runs the first one that matches.
 AsyncData(:final value) matches every AsyncData, including the empty list and the
 one-element list, so if it came first the more specific arms below it would never
 be reached (the analyzer flags them as unreachable).
+
+## Part 4 - Resilience
+
+**Exercise 4.3: refresh vs invalidate**
+
+With a RefreshIndicator, I tried onRefresh: () => ref.refresh(tickerProvider.future)
+and then onRefresh: () async => ref.invalidate(tickerProvider).
+What I observed: <write what you saw: were the old rows visible during the reload in
+each version, and how long did the pull-spinner stay?>.
+Both keep the previous rows visible, because the provider recomputes with the previous
+value carried over (a loading state that has a value), which matches the
+AsyncValue(:final value?, isLoading: true) arm. The difference is that
+ref.refresh(provider.future) returns a Future that completes when the provider
+produces its next value, so RefreshIndicator can wait for it and keeps its spinner
+until the new data arrives. ref.invalidate only marks the state stale and returns void,
+so there is nothing to await and the spinner disappears immediately.
+
+**Exercise 4.4: reconnect vs first load**
+
+My arms already handle it: after Retry the state is loading with a previous value,
+and the arm AsyncValue(:final value?, isLoading: true) sits above AsyncLoading(), so
+the full-screen spinner only appears on a cold start when there is no old value.
+isRefreshing means the provider is recomputing because it was forced (ref.refresh,
+ref.invalidate) after a value already existed; isReloading means it is recomputing
+because a watched dependency changed. In my app I saw: <write what the debugPrint
+showed for Retry and for the bug icon>.

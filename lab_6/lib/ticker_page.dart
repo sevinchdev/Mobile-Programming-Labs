@@ -12,6 +12,7 @@ class TickerPage extends ConsumerWidget {
     final ticks = ref.watch(tickerProvider);
 
     Widget rows(List<Tick> list) => ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [for (final t in list) TickRow(t, key: ValueKey(t.symbol))],
         );
 
@@ -31,42 +32,41 @@ class TickerPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: switch (ticks) {
-        // Error, but old prices exist: dim them and show a banner
-        AsyncError(:final error, :final value?) => Column(children: [
-            MaterialBanner(
-              content: Text('Feed error: $error - showing last prices'),
-              actions: [
-                TextButton(
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(tickerProvider.future),
+        child: switch (ticks) {
+          AsyncError(:final error, :final value?) => Column(children: [
+              MaterialBanner(
+                content: Text('Feed error: $error - showing last prices'),
+                actions: [
+                  TextButton(
+                    onPressed: () => ref.invalidate(tickerProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+              Expanded(child: Opacity(opacity: 0.5, child: rows(value))),
+            ]),
+          AsyncError(:final error) => Center(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('Could not load ticker\n$error', textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                FilledButton(
                   onPressed: () => ref.invalidate(tickerProvider),
                   child: const Text('Retry'),
                 ),
-              ],
+              ]),
             ),
-            Expanded(child: Opacity(opacity: 0.5, child: rows(value))),
-          ]),
-        // Error and nothing to show
-        AsyncError(:final error) => Center(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('Could not load ticker\n$error', textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: () => ref.invalidate(tickerProvider),
-                child: const Text('Retry'),
-              ),
+          AsyncValue(:final value?, isLoading: true) => Column(children: [
+              const LinearProgressIndicator(),
+              Expanded(child: rows(value)),
             ]),
-          ),
-        // Reloading, but old prices exist: keep them and show a thin bar
-        AsyncValue(:final value?, isLoading: true) => Column(children: [
-            const LinearProgressIndicator(),
-            Expanded(child: rows(value)),
-          ]),
-        AsyncData(value: []) => const Center(child: Text('No symbols subscribed')),
-        AsyncData(value: [final only]) => Center(child: TickRow(only)),
-        AsyncData(:final value) => rows(value),
-        // First load only
-        AsyncLoading() => const Center(child: CircularProgressIndicator()),
-      },
+          AsyncData(value: []) => const Center(child: Text('No symbols subscribed')),
+          AsyncData(value: [final only]) => Center(child: TickRow(only)),
+          AsyncData(:final value) => rows(value),
+          AsyncLoading() => const Center(child: CircularProgressIndicator()),
+        },
+      ),
     );
   }
 }
