@@ -1,0 +1,54 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod_ticker/models/tick.dart';
+import 'package:riverpod_ticker/providers/ticker_provider.dart';
+import 'package:riverpod_ticker/ticker_page.dart';
+
+Widget harness(Stream<List<Tick>> Function() makeStream) => ProviderScope(
+      retry: (retryCount, error) => null,
+      overrides: [
+        tickerProvider.overrideWith((ref) => makeStream()),
+      ],
+      child: const MaterialApp(home: TickerPage()),
+    );
+
+final sample = [Tick(symbol: 'BTC', price: 100, change: 1.5, at: DateTime(2026))];
+
+void main() {
+  testWidgets('loading shows spinner', (tester) async {
+    await tester.pumpWidget(harness(() => const Stream<List<Tick>>.empty()));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('data shows rows', (tester) async {
+    await tester.pumpWidget(harness(() => Stream.value(sample)));
+    await tester.pump();
+    expect(find.text('BTC'), findsOneWidget);
+    expect(find.textContaining('▲'), findsOneWidget);
+  });
+
+  testWidgets('error without data shows retry', (tester) async {
+    await tester.pumpWidget(harness(() => Stream<List<Tick>>.error('boom')));
+    await tester.pump();
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.byType(MaterialBanner), findsNothing);
+  });
+
+  testWidgets('error after data shows banner over rows', (tester) async {
+    final controller = StreamController<List<Tick>>();
+    addTearDown(controller.close);
+
+    await tester.pumpWidget(harness(() => controller.stream));
+
+    controller.add(sample);
+    await tester.pump();
+    controller.addError('boom');
+    await tester.pump();
+
+    expect(find.byType(MaterialBanner), findsOneWidget);
+    expect(find.text('BTC'), findsOneWidget);
+  });
+}
