@@ -6,12 +6,12 @@ class CartBody extends StatelessWidget {
     super.key,
     required this.lines,
     required this.onAdd,
-    required this.onRemove,
+    required this.onQtyChanged,
   });
 
   final List<CartLine> lines;
   final void Function(Product) onAdd;
-  final void Function(String productId) onRemove;
+  final void Function(String productId, int delta) onQtyChanged;
 
   @override
   Widget build(BuildContext context) => Column(children: [
@@ -20,6 +20,7 @@ class CartBody extends StatelessWidget {
           child: Wrap(spacing: 8, children: [
             for (final p in catalog)
               ActionChip(
+                key: ValueKey('add-${p.id}'),
                 label: Text('${p.name} · ${p.price.toStringAsFixed(0)}'),
                 onPressed: () => onAdd(p),
               ),
@@ -33,17 +34,20 @@ class CartBody extends StatelessWidget {
                     ListTile(
                       key: ValueKey(l.product.id),
                       title: Text(l.product.name),
-                      subtitle: Text('× ${l.qty}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () => onRemove(l.product.id),
-                      ),
+                      subtitle: Text(l.subtotal.toStringAsFixed(2)),
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove),
+                          onPressed: () => onQtyChanged(l.product.id, -1),
+                        ),
+                        Text('${l.qty}'),
+                        IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => onQtyChanged(l.product.id, 1),
+                        ),
+                      ]),
                     ),
                 ]),
-        ),
-        ListTile(
-          title: const Text('Subtotal'),
-          trailing: Text(lines.subtotal.toStringAsFixed(2)),
         ),
       ]);
 }
