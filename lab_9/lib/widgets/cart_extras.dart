@@ -44,11 +44,20 @@ class _CouponFieldState extends State<CouponField> {
       );
 }
 
-/// Item count, subtotal, discount and total (T3).
-class SummaryCard extends StatelessWidget {
-  const SummaryCard({super.key, required this.state});
+/// Item count, subtotal, discount and total, from plain values.
+class SummaryValues extends StatelessWidget {
+  const SummaryValues({
+    super.key,
+    required this.itemCount,
+    required this.subtotal,
+    required this.discount,
+    required this.total,
+  });
 
-  final CartState state;
+  final int itemCount;
+  final double subtotal;
+  final double discount;
+  final double total;
 
   Widget _row(String label, String value, {bool bold = false}) {
     final style = bold ? const TextStyle(fontWeight: FontWeight.bold) : null;
@@ -67,12 +76,27 @@ class SummaryCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(children: [
-            _row('Items', '${state.itemCount}'),
-            _row('Subtotal', state.subtotal.toStringAsFixed(2)),
-            _row('Discount', '-${state.discount.toStringAsFixed(2)}'),
-            _row('Total', state.total.toStringAsFixed(2), bold: true),
+            _row('Items', '$itemCount'),
+            _row('Subtotal', subtotal.toStringAsFixed(2)),
+            _row('Discount', '-${discount.toStringAsFixed(2)}'),
+            _row('Total', total.toStringAsFixed(2), bold: true),
           ]),
         ),
+      );
+}
+
+/// Same card, fed from a whole CartState (used by the setState version).
+class SummaryCard extends StatelessWidget {
+  const SummaryCard({super.key, required this.state});
+
+  final CartState state;
+
+  @override
+  Widget build(BuildContext context) => SummaryValues(
+        itemCount: state.itemCount,
+        subtotal: state.subtotal,
+        discount: state.discount,
+        total: state.total,
       );
 }
 
