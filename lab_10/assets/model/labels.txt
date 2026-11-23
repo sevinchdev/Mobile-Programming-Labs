@@ -1,0 +1,6 @@
+0 Car
+1 Plane
+2 Train
+3 Ship
+4 Motorcycle
+5 Nothing

@@ -15,6 +15,35 @@
 - "Nothing" class: scene images with no vehicles (street, buildings, forest)
 - A few of our own phone photos added per class
 
+### Training
+- Teachable Machine, Image Project, Standard image model
+- Samples per class: Car 60, Plane 68, Train 64, Ship __, Motorcycle __, Nothing __
+- Trained once with default settings (no retraining needed)
+
+### Preview test (fresh images, not used in training)
+| Class | Test image | Result in preview |
+|---|---|---|
+| Car | unused dataset image | 100% |
+| Plane | unused dataset image | 100% |
+| Train | unused dataset image | 100% |
+| Ship | unused dataset image | 100% |
+| Motorcycle | unused dataset image | 100% |
+| Nothing | unused scene image | 100% |
+
+All six classes reached 80% or more. Screenshots: `docs/preview.png`.
+
+**Caveat:** the test images come from the same datasets as the training
+images, so they look very similar. 100% here is likely optimistic.
+Photos from the phone camera will be harder, so the evaluation table in
+Part 5 is the honest accuracy measure.
+
+### Export
+- Exported as TensorFlow Lite, Floating point
+- `converted_tflite.zip` contains `model_unquant.tflite` and `labels.txt`
+- `labels.txt` has 6 lines, one per class
+- Both files are in `assets/model/`
+- Project backup downloaded from the Teachable Machine menu
+
 ### Inline questions
 
 **Q1. What does the model answer for an object that belongs to none of the classes? How does the background class change that?**
