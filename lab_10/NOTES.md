@@ -84,3 +84,18 @@ Nothing crashes because the tensor shape ([1, 224, 224, 3]) and type (float32) a
 ### 2. Where is the number of classes written down?
 
 Nowhere in the Dart code. It comes from `labels.txt`, and everything uses `labels.length`. After retraining with a seventh class, I only replace `model_unquant.tflite` and `labels.txt` in `assets/model/` with the new export. Any UI that lists classes (like the Welcome chips) must be built from `classifier.labels`.
+
+## Part 5: Questions
+
+### 1. Why did the same object score differently from camera and download?
+1. My training samples all came from our own webcam, with the same lighting, background and
+   camera quality. A downloaded picture has a different camera, resolution, colours and
+   backgrounds, so it falls outside what the model learned.
+2. The training samples show our specific objects (our mug, our keys), while a downloaded
+   photo shows another instance, shot from a different angle, size and framing.
+
+### 2. How long does classify take, and what does the user see?
+It took about <X> ms on my phone (measured with Stopwatch). Because it runs on the UI
+thread, the screen cannot repaint during that time: the progress bar may freeze for a moment
+and touches are ignored. I added a 50 ms delay before classifying so the loading indicator
+is drawn first. The proper fix is to run inference in an isolate (stretch goal 3).
