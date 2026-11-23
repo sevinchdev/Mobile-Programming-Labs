@@ -72,3 +72,15 @@ model files would be missing and loading would fail.
 test. `tflite_flutter` and `image_picker` call native platform code
 (Android/iOS plugins through platform channels), which doesn't exist in a
 plain unit test.
+
+## Part 3: Questions
+
+### 1. What happens with `value / 255`, and why does nothing crash?
+
+The model was trained on inputs from -1 to 1. With `/ 255` the values fall in 0 to 1, so the model sees a distorted, brighter image. The percentages still add up to 1 (softmax), but they become unreliable: the top label can change or the confidence drops. (My result: <write your numbers here>.)
+
+Nothing crashes because the tensor shape ([1, 224, 224, 3]) and type (float32) are still correct. The interpreter checks only shape and type, not whether the values make sense, so it is a silent bug.
+
+### 2. Where is the number of classes written down?
+
+Nowhere in the Dart code. It comes from `labels.txt`, and everything uses `labels.length`. After retraining with a seventh class, I only replace `model_unquant.tflite` and `labels.txt` in `assets/model/` with the new export. Any UI that lists classes (like the Welcome chips) must be built from `classifier.labels`.
